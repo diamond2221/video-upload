@@ -1,0 +1,13 @@
+POST http://localhost:8000/file/upload
+Client-Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1dWY4ZDAyZmY1NzJlMzQyNmQ4ZTA2YmY3ZjUzMmU3ZGIyIiwidXNlck5hbWUiOiJkaWFtb25kMjIyMSIsImlhdCI6MTU4MjEyMzAzMSwiZXhwIjoxNTgyNzI3ODMxfQ.c-PugevT9jtBqmStTcf7UJ4HQs1TSqHA3pkXn3AIn9I
+Client-Uid: uuf8d02ff572e3426d8e06bf7f532e7db2
+Content-Type: application/json
+
+{
+    "name": "file.mp4",
+    "total": 10000000,
+    "index": 0,
+    "size": 3000000,
+    "hash": "dasdjasdlj12312kl312l3"
+}
+
