@@ -20,7 +20,6 @@ app.use(koaBody());
 router.post('/file/upload', upload.single('file'), async (ctx, next) => {
     console.log('file upload...')
     // 根据文件hash创建文件夹，把默认上传的文件移动当前hash文件夹下。方便后续文件合并。
-    console.log(ctx.request.body)
     const { name, total, index, size, hash } = (ctx.req as any).body;
 
     const chunksPath = path.join(uploadPath, hash, '/');
