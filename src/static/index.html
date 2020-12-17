@@ -12,7 +12,10 @@
 
 <body>
     <input type="file" name="" id="file">
-    <button id="submitBtn">上传</button>
+    <button id="submitBtn">分片上传</button>
+    <button id="submitBtn1">普通上传</button>
+
+    <div id="percent"></div>
 
     </input>
 
@@ -63,6 +66,7 @@
             const submitBtn = $('#submitBtn');
             submitBtn.on('click', async () => {
                 const fileDom = $('#file')[0];
+
                 // 获取到的files为一个File对象数组，如果允许多选的时候，文件为多个
                 const files = fileDom.files;
                 const file = files[0];
@@ -70,6 +74,7 @@
                     alert('没有获取文件');
                     return;
                 }
+
                 const blockCount = Math.ceil(file.size / chunkSize); // 分片总数
                 const axiosPromiseArray = []; // axiosPromise数组
                 const hash = await hashFile(file); //文件 hash
@@ -117,6 +122,35 @@
                     });
                 });
             });
+
+            const submitBtn1 = $('#submitBtn1')
+            submitBtn1.on('click', async () => {
+                const fileDom = $('#file')[0];
+
+                // 获取到的files为一个File对象数组，如果允许多选的时候，文件为多个
+                const files = fileDom.files;
+                const file = files[0];
+                if (!file) {
+                    alert('没有获取文件');
+                    return;
+                }
+                const axiosOptions = {
+                    onUploadProgress: e => {
+                        // 处理上传的进度
+                        let percent = 0
+                        // 进度条
+                        if (e.lengthComputable) {
+                            percent = e.loaded / e.total
+                        }
+                        const p = (percent * 100).toFixed(2)
+                        document.querySelector('#percent').innerHTML = `正在上传中, 已完成 ${p}%!`
+                    },
+                };
+                const form = new FormData()
+                form.append('file', file)
+                axios.post('/file/upload/normal', form, axiosOptions)
+            });
+
         })
     </script>
 </body>

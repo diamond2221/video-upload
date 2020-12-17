@@ -8,7 +8,7 @@ import koaBody from 'koa-body'
 
 const app = new Koa();
 const { mkdirsSync } = require('./utils/dir');
-const uploadPath = path.join(__dirname, 'uploads');
+const uploadPath = path.join(__dirname, './public/upload');
 const uploadTempPath = path.join(uploadPath, 'temp');
 const upload = multer({ dest: uploadTempPath });
 const router = new Router();
@@ -35,7 +35,7 @@ router.post('/file/merge_chunks', async (ctx, next) => {
     // 创建存储文件
     // 合并
     const chunksPath = path.join(uploadPath, hash, '/');
-    const filePath = path.join(uploadPath, name);
+    const filePath = path.join(uploadPath, `${hash}-${Date.now()}.${name.split('.').pop()}`);
     // 读取所有的chunks 文件名存放在数组中
     const chunks = fs.readdirSync(chunksPath);
     // 创建存储文件
@@ -56,6 +56,102 @@ router.post('/file/merge_chunks', async (ctx, next) => {
     ctx.status = 200;
     ctx.res.end('合并成功');
 })
+
+router.post('/file/upload/normal', upload.single('file'), async (ctx) => {
+    // 获取上传文件
+    const file = (ctx.req as any).file
+
+    // 写入目录
+    const mkdirsSync = (dirname: string) => {
+        if (fs.existsSync(dirname)) {
+            return true
+        } else {
+            if (mkdirsSync(path.dirname(dirname))) {
+                fs.mkdirSync(dirname)
+                return true
+            }
+        }
+        return false
+    }
+
+    // 重命名
+    function rename(fileName: string) {
+        return Math.random().toString(16).substr(2) + '.' + fileName.split('.').pop()
+    }
+
+    // 删除文件
+    function removeTemImage(path: string) {
+        fs.unlink(path, (err) => {
+            if (err) {
+                throw err
+            }
+        })
+    }
+
+    // 上传到本地
+    /**
+     * @description 上传到本地
+     * @param {*} file
+     * @returns {Promise} fileName fileFullPath
+     * @file http://nodejs.cn/api/fs.html#fs_fs_createreadstream_path_options
+     */
+    function upToLocal(file: any) {
+        return new Promise((resolve, reject) => {
+            // 本地文件存储路径
+            let filePath = path.join(__dirname, 'public/upload/');
+
+            // 创建本地上传文件路径
+            const confirm = mkdirsSync(filePath)
+            if (!confirm) {
+                console.log("------- 创建本地上传文件路径失败 ----------")
+                return
+            }
+
+            // 创建可读流
+            const stream = fs.createReadStream(file.path)
+
+            // 文件名
+            const fileName = rename(file.originalname)
+
+            // 本地文件路径
+            const fileFullPath = path.join(path.join(filePath, fileName))
+
+            // 创建可写流
+            const upStream = fs.createWriteStream(fileFullPath)
+
+            // 可读流通过管道写入可写流
+            stream.pipe(upStream);
+
+            stream.on('end', () => {
+                console.log('file read finished');
+
+                // 关闭流
+                stream.push(null);
+                stream.read(0);
+
+                resolve({ fileName, fileFullPath })
+            })
+
+            stream.on('error', (err) => {
+                reject(err)
+            })
+
+        })
+    }
+
+    // 上传文件到本地获，获取本地的 文件名 和 文件路径
+    const local_res = await upToLocal(file) as any
+
+    ctx.status = 200
+    ctx.body = {
+        code: 0,
+        message: 'success',
+        data: {
+            avatar: `${local_res.fileFullPath}`
+        }
+    }
+})
+
 app.use(router.routes());
 app.use(router.allowedMethods());
 app.use(serve(__dirname + '/static'));
